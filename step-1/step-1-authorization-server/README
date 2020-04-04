@@ -1,0 +1,8 @@
+https://docs.spring.io/spring-security-oauth2-boot/docs/current/reference/htmlsingle/#oauth2-boot-authorization-server-authorization-code-grant
+
+./mvnw clean ; ./mvnw -f step-1/step-1-authorization-server
+
+java -jar step-1/step-1-authorization-server/target/*.jar &
+
+curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=client_credentials -d scope=any
+curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=password -d scope=any -d username=enduser -d password=enduserpassword

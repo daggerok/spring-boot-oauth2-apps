@@ -1,0 +1,7 @@
+https://docs.spring.io/spring-security-oauth2-boot/docs/current/reference/htmlsingle/#oauth2-boot-authorization-server-minimal
+
+./mvnw clean ; ./mvnw -f step-0/step-0-authorization-server
+
+java -jar step-0/step-0-authorization-server/target/*.jar &
+
+curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=client_credentials -d scope=any

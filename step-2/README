@@ -1,0 +1,14 @@
+https://docs.spring.io/spring-security-oauth2-boot/docs/current/reference/htmlsingle/#registering-a-redirect-uri-with-the-client
+
+./mvnw clean ; ./mvnw -pl :step-2-app,:step-2-authorization-server
+java -jar step-2/step-2-authorization-server/target/*.jar &
+java -jar step-2/step-2-app/target/*.jar &
+
+1. open in browser: http://127.0.0.1:8080
+2. click register
+3. you should be redirected with url: http://localhost:8081/oauth/authorize?grant_type=authorization_code&response_type=code&client_id=first-client
+4. authenticate with: `enduser` / `enduserpassword`
+5. you should be redirected on authorization page
+6. allow or deny...
+7. once allowed, click Authorize
+8. you should be redirected back to target page with authorization code present in a browser url

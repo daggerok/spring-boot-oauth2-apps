@@ -1,0 +1,171 @@
+name: CI
+on: [push]
+jobs:
+  build-all:
+    strategy:
+      matrix:
+        java: [14]
+        os: [ubuntu-latest]
+        docker-version: [19.09]
+        docker-channel: [stable]
+    runs-on: ${{ matrix.os }}
+    name: build all java-${{ matrix.java }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+      - run: sudo apt-get update -yqq --fix-missing
+      - uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_channel: ${{ matrix.docker-channel }}
+      - run: sudo apt-get install -yqq jq curl httpie
+      - uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-${{ matrix.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-docker-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - run: ./mvnw
+  step-0:
+    strategy:
+      matrix:
+        java: [14]
+        os: [ubuntu-latest]
+        docker-version: [19.09]
+        docker-channel: [stable]
+    runs-on: ${{ matrix.os }}
+    name: step-0 java-${{ matrix.java }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+      - run: sudo apt-get update -yqq --fix-missing
+      - uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_channel: ${{ matrix.docker-channel }}
+      - run: sudo apt-get install -yqq jq curl httpie
+      - uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-${{ matrix.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-docker-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - run: ./mvnw -q clean
+      - run: ./mvnw -q -f step-0/step-0-authorization-server
+      - run: ./mvnw -f step-0/step-0-authorization-server jib:dockerBuild
+      - run: docker run --name step-0 --rm -it -d -p 8081:8081 daggerok/step-0-authorization-server
+      - run: |
+          docker logs -f -t step-0 &
+          sleep 9s
+          which curl
+          curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=client_credentials -d scope=any | jq '.'
+          docker rm -f -v `docker ps -aq`
+  step-1:
+    strategy:
+      matrix:
+        java: [14]
+        os: [ubuntu-latest]
+        docker-version: [19.09]
+        docker-channel: [stable]
+    runs-on: ${{ matrix.os }}
+    name: step-1 java-${{ matrix.java }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+      - run: sudo apt-get update -yqq --fix-missing
+      - uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_channel: ${{ matrix.docker-channel }}
+      - run: sudo apt-get install -yqq jq curl httpie
+      - uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-${{ matrix.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-docker-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - run: ./mvnw -q clean
+      - run: ./mvnw -q -f step-1/step-1-authorization-server
+      - run: ./mvnw -f step-1/step-1-authorization-server jib:dockerBuild
+      - run: docker run --name step-1 --rm -it -d -p 8081:8081 daggerok/step-1-authorization-server
+      - run: |
+          docker logs -f -t step-1 &
+          sleep 9s
+          which curl
+          curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=client_credentials -d scope=any | jq '.'
+          curl -sS first-client:noonewilleverguess@0:8081/oauth/token -d grant_type=password -d scope=any -d username=enduser -d password=enduserpassword | jq '.'
+          docker rm -f -v `docker ps -aq`
+  step-2:
+    strategy:
+      matrix:
+        java: [14]
+        os: [ubuntu-latest]
+        docker-version: [19.09]
+        docker-channel: [stable]
+    runs-on: ${{ matrix.os }}
+    name: step-2 java-${{ matrix.java }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v1
+      - run: sudo apt-get update -yqq --fix-missing
+      - uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_channel: ${{ matrix.docker-channel }}
+      - run: sudo apt-get install -yqq jq curl
+      - uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-${{ matrix.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-docker-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - run: ./mvnw -q clean
+      - run: ./mvnw -q -pl :step-2-app,:step-2-authorization-server
+      - run: ./mvnw -pl :step-2-app,:step-2-authorization-server jib:dockerBuild
+      - run: docker run --name step-2-auth --rm -it -d -p 8081:8081 daggerok/step-2-authorization-server
+      - run: docker run --name step-2-app  --rm -it -d -p 8080:8080 daggerok/step-2-app
+      - run: |
+          docker logs -f -t step-2-auth &
+          docker logs -f -t step-2-app &
+          sleep 10s
+          curl -sS  0:8080 --compressed
+          curl -sS '0:8081/oauth/authorize?grant_type=authorization_code&response_type=code&client_id=first-client' || echo should 401
+          response=`curl -isS 0:8081/login`
+          setCookie=`echo $response | grep 'Set-Cookie' | awk -F ' ' '{print $2}'`
+          _csrf=`echo $response | grep _csrf | awk -F '[<>]' '{print $2}' | awk -F 'value="' '{print $2}' | awk -F '"' '{print $1}'`
+          curl --cookie $setCookie -iXPOST '0:8081/login' -H 'Content-Type:application/x-www-form-urlencoded' --data "username=enduser&password=enduserpassword&_csrf=$_csrf"
+          #curl -u first-client:noonewilleverguess -iXPOST '0:8081/login' -H 'Content-Type:application/x-www-form-urlencoded' --data "username=enduser&password=enduserpassword&_csrf=$_csrf"
+          #curl -u first-client:noonewilleverguess --cookie $setCookie -iXPOST '0:8081/login' -H 'Content-Type:application/x-www-form-urlencoded' --data "username=enduser&password=enduserpassword&_csrf=$_csrf"
+          docker rm -f -v `docker ps -aq`
